@@ -281,11 +281,6 @@ function normalizeMl(mlData) {
   };
 }
 
-app.get("*", (req, res, next) => {
-  if (req.path.startsWith("/api/")) return next();
-  res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
-});
-
 app.post("/api/site-telemetry", async (req, res) => {
   const { lat, lng, date, irrigation } = req.body ?? {};
 
@@ -362,6 +357,17 @@ app.post("/api/site-telemetry", async (req, res) => {
   }
 
   return res.json(response);
+});
+
+// SPA client-side fallback: any unhandled non-API GET request returns index.html
+app.use((req, res, next) => {
+  if (req.method === "GET" && !req.path.startsWith("/api/")) {
+    const indexPath = path.join(__dirname, "../frontend/dist/index.html");
+    return res.sendFile(indexPath, (err) => {
+      if (err) next();
+    });
+  }
+  next();
 });
 
 app.listen(PORT, () => {
